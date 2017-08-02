@@ -56,6 +56,7 @@ type deliveryDetails struct {
 	PickupAddress      string `json:"pickupAddress"`
 	DeliveryAddress    string `json:"deliveryAddress"`
 	DeliveryDate       string `json:"deliveryDate"`
+	Incoterm           string `json:"incoterm"`
 	TransporterDetails user   `json:"transporterDetails"`
 }
 

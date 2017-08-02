@@ -12,6 +12,14 @@ var Payment_Completed_to_Seller_Bank = "Payment Completed to Seller Bank"
 var Payment_Completed_to_Seller = "Payment Completed to Seller"
 var Contract_Completed = "Contract Completed"
 
+//Payment Condotions
+var Max_Days_PaymentDuration = 30
+var Min_Days_PaymentDuration = 15
+var Min_Days_TransportDuration = 10
+var Max_Days_TransportDuration = 20
+var Min_Days_DeliveryDuration = 15
+var Max_Days_DeliveryDuration = 30
+
 func mapping_status(contract_status string) string {
 	category := map[string]string{
 		"Contract Created":                 "Contract",

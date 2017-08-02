@@ -71,6 +71,37 @@ func saveContractDetails(stub shim.ChaincodeStubInterface, args []string) ([]byt
 
 	json.Unmarshal([]byte(args[0]), &contractDetails)
 
+	//Mandatory Field checking
+	ok, err = mandatoryFieldCheck(contractDetails)
+	if !ok {
+		return nil, err
+	}
+
+	//Delivary Date Duration checking
+	deliveryDate, _ := time.Parse(time.RFC3339, contractDetails.DeliveryDetails.DeliveryDate)
+	duration := time.Since(deliveryDate)
+	if int(duration.Hours()) < (Min_Days_DeliveryDuration * 24) {
+		return nil, errors.New("Delivery Duration must be greater than " + string(Min_Days_DeliveryDuration) + " days")
+	} else if int(duration.Hours()) > (Max_Days_DeliveryDuration * 24) {
+		return nil, errors.New("Payment Duration must be less than " + string(Max_Days_DeliveryDuration) + " days")
+	}
+
+	// Payment duartion checking
+	PaymentDuration, _ := strconv.Atoi(contractDetails.TradeConditions.PaymentDuration)
+	if PaymentDuration < Min_Days_PaymentDuration {
+		return nil, errors.New("Payment Duration must be gereater than " + string(Min_Days_PaymentDuration) + " days")
+	} else if PaymentDuration > Max_Days_PaymentDuration {
+		return nil, errors.New("Payment Duration must be less than " + string(Max_Days_PaymentDuration) + " days")
+	}
+
+	// Transport duartion checking
+	TransportDuration, _ := strconv.Atoi(contractDetails.TradeConditions.TransportDuration)
+	if TransportDuration < Min_Days_TransportDuration {
+		return nil, errors.New("Payment Duration must be gereater than " + string(Min_Days_TransportDuration) + " days")
+	} else if TransportDuration > Max_Days_TransportDuration {
+		return nil, errors.New("Payment Duration must be less than " + string(Max_Days_TransportDuration) + " days")
+	}
+
 	contractDetails = addContractInformation(contractDetails)
 
 	ok, err = insertContractDetails(stub, contractDetails)
@@ -1013,4 +1044,19 @@ func UpdateContractStatus(stub shim.ChaincodeStubInterface, args []string) ([]by
 	}
 
 	return nil, err
+}
+
+func mandatoryFieldCheck(contractDetails contract) (bool, error) {
+	if contractDetails.DeliveryDetails.Incoterm == "" {
+		return false, errors.New("Incoterm field is mandatory")
+	} else if contractDetails.TradeConditions.PaymentTerms == "" {
+		return false, errors.New("PaymentTerms field is mandatory")
+	} else if contractDetails.TradeConditions.PaymentDuration == "" {
+		return false, errors.New("PaymentDuration field is mandatory")
+	} else if contractDetails.TradeConditions.TransportDuration == "" {
+		return false, errors.New("TransportDuration field is mandatory")
+	} else if contractDetails.DeliveryDetails.DeliveryDate == "" {
+		return false, errors.New("DeliveryDate field is mandatory")
+	}
+	return true, nil
 }
