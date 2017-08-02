@@ -78,13 +78,21 @@ func saveContractDetails(stub shim.ChaincodeStubInterface, args []string) ([]byt
 	}
 
 	//Delivary Date Duration checking
-	deliveryDate, _ := time.Parse(time.RFC3339, contractDetails.DeliveryDetails.DeliveryDate)
-	duration := time.Since(deliveryDate)
+	DeliveryDate, _ := time.Parse(time.RFC3339, contractDetails.DeliveryDetails.DeliveryDate)
+	CurrentDate := time.Now()
+	Days := DiffDays(int(DeliveryDate.Year()), int(DeliveryDate.Month()), int(DeliveryDate.Day()), int(CurrentDate.Year()), int(CurrentDate.Month()), int(CurrentDate.Day()))
+
+	if Days < Min_Days_DeliveryDuration {
+		return nil, errors.New("Delivery Duration must be greater than " + string(Min_Days_DeliveryDuration) + " days")
+	} else if Days > Max_Days_DeliveryDuration {
+		return nil, errors.New("Payment Duration must be less than " + string(Max_Days_DeliveryDuration) + " days")
+	}
+	/*duration := time.Since(deliveryDate)
 	if int(duration.Hours()) < (Min_Days_DeliveryDuration * 24) {
 		return nil, errors.New("Delivery Duration must be greater than " + string(Min_Days_DeliveryDuration) + " days")
 	} else if int(duration.Hours()) > (Max_Days_DeliveryDuration * 24) {
 		return nil, errors.New("Payment Duration must be less than " + string(Max_Days_DeliveryDuration) + " days")
-	}
+	}*/
 
 	// Payment duartion checking
 	PaymentDuration, _ := strconv.Atoi(contractDetails.TradeConditions.PaymentDuration)
@@ -962,7 +970,7 @@ func UpdateContractStatus(stub shim.ChaincodeStubInterface, args []string) ([]by
 	//var contractLists contract
 
 	if len(args) != 2 {
-		return nil, errors.New("Incorrect number of arguments. Need 3 arguments")
+		return nil, errors.New("Incorrect number of arguments. Need 2 arguments")
 	}
 
 	userID := args[0]
@@ -1041,6 +1049,25 @@ func UpdateContractStatus(stub shim.ChaincodeStubInterface, args []string) ([]by
 	ok = updateContractListByContractID(stub, contractID, contractList)
 	if !ok {
 		return nil, errors.New("Error in updating contract list")
+	}
+
+	//Discount logic - Ready For Shipment
+	DeliveryDate, _ := time.Parse(time.RFC3339, contractList.DeliveryDetails.DeliveryDate)
+	CurrentDate := time.Now().Local()
+	if contractList.SellerDetails.Seller.UserId == userID {
+		if contractStatus == LC_Approved {
+			if CurrentDate.After(DeliveryDate) {
+				Days := DiffDays(int(DeliveryDate.Year()), int(DeliveryDate.Month()), int(DeliveryDate.Day()), int(CurrentDate.Year()), int(CurrentDate.Month()), int(CurrentDate.Day()))
+				if (Days > 0) && (Days <= 5) {
+					return []byte("Disscount 5%"), nil //errors.New("Disscount 5%")
+				} else if (Days >= 6) && (Days <= 15) {
+					return []byte("Disscount 10%"), nil //errors.New("Disscount 10%")
+				} else {
+					return []byte("Disscount 20%"), nil //errors.New("Disscount 20%")
+				}
+
+			}
+		}
 	}
 
 	return nil, err

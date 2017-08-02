@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 var Contract_Created = "Contract Created"
 var Contract_Accepted = "Contract Accepted"
 var LC_Created = "LC Created"
@@ -36,4 +38,21 @@ func mapping_status(contract_status string) string {
 	}
 	category_status := category[contract_status]
 	return category_status
+}
+
+func DiffDays(year2, month2, day2, year1, month1, day1 int) int {
+	if year2 < year1 {
+		return -DiffDays(year1, month1, day1, year2, month2, day2)
+	}
+	d2 := time.Date(year2, time.Month(month2), day2, 0, 0, 0, 0, time.UTC)
+	d1 := time.Date(year1, time.Month(month1), day1, 0, 0, 0, 0, time.UTC)
+	diff := d2.YearDay() - d1.YearDay()
+
+	for y := year1; y < year2; y++ {
+		diff += time.Date(y, time.December, 31, 0, 0, 0, 0, time.UTC).YearDay()
+	}
+	/* if debug && !d1.AddDate(0, 0, diff).Equal(d2) {
+	    panic("invalid diff")
+	} */
+	return diff
 }
