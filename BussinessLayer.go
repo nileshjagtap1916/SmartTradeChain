@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"sort"
 	"strconv"
 	"time"
@@ -183,6 +184,15 @@ func addContractInformation(contractDetails contract) contract {
 	contractDetails.IsInvoiceListAttached = false
 	contractDetails.ActionPendingOn = "buyer"
 	contractDetails.ContractStatus = "Contract Created"
+
+	//calculate TotalTradeAmount
+	var TotalTradeAmout float64
+	TotalTradeAmout = 0
+	for _, element := range contractDetails.TradeDetails {
+		Amount, _ := strconv.ParseFloat(element.TotalAmount, 64)
+		TotalTradeAmout = TotalTradeAmout + Amount
+	}
+	contractDetails.TotalTradeAmout = TotalTradeAmout
 
 	return contractDetails
 }
@@ -1046,10 +1056,6 @@ func UpdateContractStatus(stub shim.ChaincodeStubInterface, args []string) ([]by
 
 	contractList.LastUpdatedDate = current_time.Format("2006-01-02")
 	//status = setStructStatus(stub, status, userID, contractStatus)
-	ok = updateContractListByContractID(stub, contractID, contractList)
-	if !ok {
-		return nil, errors.New("Error in updating contract list")
-	}
 
 	//Discount logic - Ready For Shipment
 	DeliveryDate, _ := time.Parse(time.RFC3339, contractList.DeliveryDetails.DeliveryDate)
@@ -1059,31 +1065,177 @@ func UpdateContractStatus(stub shim.ChaincodeStubInterface, args []string) ([]by
 			if CurrentDate.After(DeliveryDate) {
 				Days := DiffDays(int(DeliveryDate.Year()), int(DeliveryDate.Month()), int(DeliveryDate.Day()), int(CurrentDate.Year()), int(CurrentDate.Month()), int(CurrentDate.Day()))
 				if (Days > 0) && (Days <= 5) {
-					return []byte("Disscount 5%"), nil //errors.New("Disscount 5%")
+					contractList.DiscountedAmout = contractList.TotalTradeAmout - (contractList.TotalTradeAmout * 0.5)
+					//return []byte("Disscount 5%"), nil //errors.New("Disscount 5%")
 				} else if (Days >= 6) && (Days <= 15) {
-					return []byte("Disscount 10%"), nil //errors.New("Disscount 10%")
+					contractList.DiscountedAmout = contractList.TotalTradeAmout - (contractList.TotalTradeAmout * 0.15)
+					//return []byte("Disscount 10%"), nil //errors.New("Disscount 10%")
 				} else {
-					return []byte("Disscount 20%"), nil //errors.New("Disscount 20%")
+					contractList.DiscountedAmout = contractList.TotalTradeAmout - (contractList.TotalTradeAmout * 0.20)
+					//return []byte("Disscount 20%"), nil //errors.New("Disscount 20%")
 				}
 
 			}
 		}
 	}
 
+	ok = updateContractListByContractID(stub, contractID, contractList)
+	if !ok {
+		return nil, errors.New("Error in updating contract list")
+	}
+
 	return nil, err
 }
 
 func mandatoryFieldCheck(contractDetails contract) (bool, error) {
-	if contractDetails.DeliveryDetails.Incoterm == "" {
-		return false, errors.New("Incoterm field is mandatory")
-	} else if contractDetails.TradeConditions.PaymentTerms == "" {
-		return false, errors.New("PaymentTerms field is mandatory")
+
+	if contractDetails.SellerDetails.Seller.UserId == "" {
+		return false, errors.New("Seller UserId field is mandatory")
+	} else if contractDetails.SellerDetails.Seller.UserName == "" {
+		return false, errors.New("Seller UserName field is mandatory")
+	} else if contractDetails.SellerDetails.Seller.ContactNo == "" {
+		return false, errors.New("Seller ContactNo field is mandatory")
+	} else if contractDetails.SellerDetails.Seller.Address == "" {
+		return false, errors.New("Seller Address field is mandatory")
+	} else if contractDetails.SellerDetails.SellerBank.UserId == "" {
+		return false, errors.New("SellerBank UserId field is mandatory")
+	} else if contractDetails.SellerDetails.SellerBank.UserName == "" {
+		return false, errors.New("SellerBank UserName field is mandatory")
+	} else if contractDetails.SellerDetails.SellerBank.ContactNo == "" {
+		return false, errors.New("SellerBank ContactNo field is mandatory")
+	} else if contractDetails.SellerDetails.SellerBank.Address == "" {
+		return false, errors.New("SellerBank Address field is mandatory")
+	} else if contractDetails.BuyerDetails.Buyer.UserId == "" {
+		return false, errors.New("Buyer UserId field is mandatory")
+	} else if contractDetails.BuyerDetails.Buyer.UserName == "" {
+		return false, errors.New("Buyer UserName field is mandatory")
+	} else if contractDetails.BuyerDetails.Buyer.ContactNo == "" {
+		return false, errors.New("Buyer ContactNo field is mandatory")
+	} else if contractDetails.BuyerDetails.Buyer.Address == "" {
+		return false, errors.New("Buyer Address field is mandatory")
+	} else if contractDetails.BuyerDetails.BuyerBank.UserId == "" {
+		return false, errors.New("BuyerBank UserId field is mandatory")
+	} else if contractDetails.BuyerDetails.BuyerBank.UserName == "" {
+		return false, errors.New("BuyerBank UserName field is mandatory")
+	} else if contractDetails.BuyerDetails.BuyerBank.ContactNo == "" {
+		return false, errors.New("BuyerBank ContactNo field is mandatory")
+	} else if contractDetails.BuyerDetails.BuyerBank.Address == "" {
+		return false, errors.New("BuyerBank Address field is mandatory")
 	} else if contractDetails.TradeConditions.PaymentDuration == "" {
 		return false, errors.New("PaymentDuration field is mandatory")
 	} else if contractDetails.TradeConditions.TransportDuration == "" {
 		return false, errors.New("TransportDuration field is mandatory")
+	} else if contractDetails.TradeConditions.Currency == "" {
+		return false, errors.New("Currency field is mandatory")
+	} else if contractDetails.TradeConditions.PaymentTerms == "" {
+		return false, errors.New("PaymentTerms field is mandatory")
+	} else if contractDetails.DeliveryDetails.PickupAddress == "" {
+		return false, errors.New("PickupAddress field is mandatory")
+	} else if contractDetails.DeliveryDetails.DeliveryAddress == "" {
+		return false, errors.New("DeliveryAddress field is mandatory")
 	} else if contractDetails.DeliveryDetails.DeliveryDate == "" {
 		return false, errors.New("DeliveryDate field is mandatory")
+	} else if contractDetails.DeliveryDetails.Incoterm == "" {
+		return false, errors.New("Incoterm field is mandatory")
+	} else if contractDetails.DeliveryDetails.TransporterDetails.UserId == "" {
+		return false, errors.New("TransporterDetails UserId field is mandatory")
+	} else if contractDetails.DeliveryDetails.TransporterDetails.UserName == "" {
+		return false, errors.New("TransporterDetails UserName field is mandatory")
+	} else if contractDetails.DeliveryDetails.TransporterDetails.ContactNo == "" {
+		return false, errors.New("TransporterDetails ContactNo field is mandatory")
+	} else if contractDetails.DeliveryDetails.TransporterDetails.Address == "" {
+		return false, errors.New("TransporterDetails Address field is mandatory")
+	}
+
+	for _, element := range contractDetails.TradeDetails {
+		if element.ProductName == "" {
+			return false, errors.New("ProductName field is mandatory")
+		} else if element.ProductDesc == "" {
+			return false, errors.New("ProductDesc field is mandatory")
+		} else if element.ProductPrice == "" {
+			return false, errors.New("ProductPrice field is mandatory")
+		} else if element.ProductQuantity == "" {
+			return false, errors.New("ProductQuantity field is mandatory")
+		} else if element.TotalAmount == "" {
+			return false, errors.New("TotalAmount field is mandatory")
+		}
+	}
+
+	return true, nil
+}
+
+func dataTypeCheck(contractDetails contract) (bool, error) {
+
+	if reflect.TypeOf(contractDetails.SellerDetails.Seller.UserId).Kind() != reflect.String {
+		return false, errors.New("String required for Seller UserId field ")
+	} else if reflect.TypeOf(contractDetails.SellerDetails.Seller.UserName).Kind() != reflect.String {
+		return false, errors.New("String required for Seller UserName field ")
+	} else if reflect.TypeOf(contractDetails.SellerDetails.Seller.ContactNo).Kind() != reflect.String {
+		return false, errors.New("String required for Seller ContactNo field ")
+	} else if reflect.TypeOf(contractDetails.SellerDetails.Seller.Address).Kind() != reflect.String {
+		return false, errors.New("String required for Seller Address field ")
+	} else if reflect.TypeOf(contractDetails.SellerDetails.SellerBank.UserId).Kind() != reflect.String {
+		return false, errors.New("String required for SellerBank UserId field ")
+	} else if reflect.TypeOf(contractDetails.SellerDetails.SellerBank.UserName).Kind() != reflect.String {
+		return false, errors.New("String required for SellerBank UserName field ")
+	} else if reflect.TypeOf(contractDetails.SellerDetails.SellerBank.ContactNo).Kind() != reflect.String {
+		return false, errors.New("String required for SellerBank ContactNo field ")
+	} else if reflect.TypeOf(contractDetails.SellerDetails.SellerBank.Address).Kind() != reflect.String {
+		return false, errors.New("String required for SellerBank Address field ")
+	} else if reflect.TypeOf(contractDetails.BuyerDetails.Buyer.UserId).Kind() != reflect.String {
+		return false, errors.New("String required for Buyer UserId field ")
+	} else if reflect.TypeOf(contractDetails.BuyerDetails.Buyer.UserName).Kind() != reflect.String {
+		return false, errors.New("String required for Buyer UserName field ")
+	} else if reflect.TypeOf(contractDetails.BuyerDetails.Buyer.ContactNo).Kind() != reflect.String {
+		return false, errors.New("String required for Buyer ContactNo field ")
+	} else if reflect.TypeOf(contractDetails.BuyerDetails.Buyer.Address).Kind() != reflect.String {
+		return false, errors.New("String required for Buyer Address field ")
+	} else if reflect.TypeOf(contractDetails.BuyerDetails.BuyerBank.UserId).Kind() != reflect.String {
+		return false, errors.New("String required for BuyerBank UserId field ")
+	} else if reflect.TypeOf(contractDetails.BuyerDetails.BuyerBank.UserName).Kind() != reflect.String {
+		return false, errors.New("String required for BuyerBank UserName field ")
+	} else if reflect.TypeOf(contractDetails.BuyerDetails.BuyerBank.ContactNo).Kind() != reflect.String {
+		return false, errors.New("String required for BuyerBank ContactNo field ")
+	} else if reflect.TypeOf(contractDetails.BuyerDetails.BuyerBank.Address).Kind() != reflect.String {
+		return false, errors.New("String required for BuyerBank Address field ")
+	} else if reflect.TypeOf(contractDetails.TradeConditions.PaymentDuration).Kind() != reflect.String {
+		return false, errors.New("String required for PaymentDuration field ")
+	} else if reflect.TypeOf(contractDetails.TradeConditions.TransportDuration).Kind() != reflect.String {
+		return false, errors.New("String required for TransportDuration field ")
+	} else if reflect.TypeOf(contractDetails.TradeConditions.Currency).Kind() != reflect.String {
+		return false, errors.New("String required for Currency field ")
+	} else if reflect.TypeOf(contractDetails.TradeConditions.PaymentTerms).Kind() != reflect.String {
+		return false, errors.New("String required for PaymentTerms field ")
+	} else if reflect.TypeOf(contractDetails.DeliveryDetails.PickupAddress).Kind() != reflect.String {
+		return false, errors.New("String required for PickupAddress field ")
+	} else if reflect.TypeOf(contractDetails.DeliveryDetails.DeliveryAddress).Kind() != reflect.String {
+		return false, errors.New("String required for DeliveryAddress field ")
+	} else if reflect.TypeOf(contractDetails.DeliveryDetails.DeliveryDate).Kind() != reflect.String {
+		return false, errors.New("String required for DeliveryDate field ")
+	} else if reflect.TypeOf(contractDetails.DeliveryDetails.Incoterm).Kind() != reflect.String {
+		return false, errors.New("String required for Incoterm field ")
+	} else if reflect.TypeOf(contractDetails.DeliveryDetails.TransporterDetails.UserId).Kind() != reflect.String {
+		return false, errors.New("String required for TransporterDetails UserId field ")
+	} else if reflect.TypeOf(contractDetails.DeliveryDetails.TransporterDetails.UserName).Kind() != reflect.String {
+		return false, errors.New("String required for TransporterDetails UserName field ")
+	} else if reflect.TypeOf(contractDetails.DeliveryDetails.TransporterDetails.ContactNo).Kind() != reflect.String {
+		return false, errors.New("String required for TransporterDetails ContactNo field ")
+	} else if reflect.TypeOf(contractDetails.DeliveryDetails.TransporterDetails.Address).Kind() != reflect.String {
+		return false, errors.New("String required for TransporterDetails Address field ")
+	}
+
+	for _, element := range contractDetails.TradeDetails {
+		if reflect.TypeOf(element.ProductName).Kind() != reflect.String {
+			return false, errors.New("String required for ProductName field ")
+		} else if reflect.TypeOf(element.ProductDesc).Kind() != reflect.String {
+			return false, errors.New("String required for ProductDesc field ")
+		} else if reflect.TypeOf(element.ProductPrice).Kind() != reflect.String {
+			return false, errors.New("String required for ProductPrice field ")
+		} else if reflect.TypeOf(element.ProductQuantity).Kind() != reflect.String {
+			return false, errors.New("String required for ProductQuantity field ")
+		} else if reflect.TypeOf(element.TotalAmount).Kind() != reflect.String {
+			return false, errors.New("String required for TotalAmount field ")
+		}
 	}
 	return true, nil
 }
