@@ -193,13 +193,13 @@ func addContractInformation(contractDetails contract) contract {
 	contractDetails.ContractStatus = "Contract Created"
 
 	//calculate TotalTradeAmount
-	var TotalTradeAmout float64
-	TotalTradeAmout = 0
+	var TotalTradeAmount float64
+	TotalTradeAmount = 0
 	for _, element := range contractDetails.TradeDetails {
 		Amount, _ := strconv.ParseFloat(element.TotalAmount, 64)
-		TotalTradeAmout = TotalTradeAmout + Amount
+		TotalTradeAmount = TotalTradeAmount + Amount
 	}
-	contractDetails.TotalTradeAmout = TotalTradeAmout
+	contractDetails.TotalTradeAmount = TotalTradeAmount
 
 	return contractDetails
 }
@@ -1073,15 +1073,15 @@ func UpdateContractStatus(stub shim.ChaincodeStubInterface, args []string) ([]by
 				Days := DiffDays(int(CurrentDate.Year()), int(CurrentDate.Month()), int(CurrentDate.Day()), int(DeliveryDate.Year()), int(DeliveryDate.Month()), int(DeliveryDate.Day()))
 				if (Days > 0) && (Days <= 5) {
 					contractList.DiscountPercentage = 5
-					contractList.DiscountedAmout = contractList.TotalTradeAmout - (contractList.TotalTradeAmout * 0.5)
+					contractList.DiscountedAmount = contractList.TotalTradeAmount - (contractList.TotalTradeAmount * 0.5)
 					//return []byte("Disscount 5%"), nil //errors.New("Disscount 5%")
 				} else if (Days >= 6) && (Days <= 15) {
 					contractList.DiscountPercentage = 10
-					contractList.DiscountedAmout = contractList.TotalTradeAmout - (contractList.TotalTradeAmout * 0.10)
+					contractList.DiscountedAmount = contractList.TotalTradeAmount - (contractList.TotalTradeAmount * 0.10)
 					//return []byte("Disscount 10%"), nil //errors.New("Disscount 10%")
 				} else if Days >= 16 {
 					contractList.DiscountPercentage = 20
-					contractList.DiscountedAmout = contractList.TotalTradeAmout - (contractList.TotalTradeAmout * 0.20)
+					contractList.DiscountedAmount = contractList.TotalTradeAmount - (contractList.TotalTradeAmount * 0.20)
 					//return []byte("Disscount 20%"), nil //errors.New("Disscount 20%")
 				}
 
