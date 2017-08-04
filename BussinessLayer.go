@@ -1075,7 +1075,7 @@ func UpdateContractStatus(stub shim.ChaincodeStubInterface, args []string) ([]by
 					contractList.DiscountedAmout = contractList.TotalTradeAmout - (contractList.TotalTradeAmout * 0.5)
 					//return []byte("Disscount 5%"), nil //errors.New("Disscount 5%")
 				} else if (Days >= 6) && (Days <= 15) {
-					contractList.DiscountedAmout = contractList.TotalTradeAmout - (contractList.TotalTradeAmout * 0.15)
+					contractList.DiscountedAmout = contractList.TotalTradeAmout - (contractList.TotalTradeAmout * 0.10)
 					//return []byte("Disscount 10%"), nil //errors.New("Disscount 10%")
 				} else if Days >= 16 {
 					contractList.DiscountedAmout = contractList.TotalTradeAmout - (contractList.TotalTradeAmout * 0.20)
