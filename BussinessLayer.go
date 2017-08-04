@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"reflect"
 	"sort"
 	"strconv"
 	"time"
@@ -72,44 +71,52 @@ func saveContractDetails(stub shim.ChaincodeStubInterface, args []string) ([]byt
 
 	json.Unmarshal([]byte(args[0]), &contractDetails)
 
-	//Mandatory Field checking
-	ok, err = mandatoryFieldCheck(contractDetails)
-	if !ok {
-		return nil, err
-	}
+	/* Commented becouse v0.6 does not support it
+		//Datatype checking
+		ok, err = dataTypeCheck(contractDetails)
+		if !ok {
+			return nil, err
+		}
 
-	//Delivary Date Duration checking
-	DeliveryDate, _ := time.Parse(time.RFC3339, contractDetails.DeliveryDetails.DeliveryDate)
-	CurrentDate := time.Now()
-	Days := DiffDays(int(DeliveryDate.Year()), int(DeliveryDate.Month()), int(DeliveryDate.Day()), int(CurrentDate.Year()), int(CurrentDate.Month()), int(CurrentDate.Day()))
+		//Mandatory Field checking
+		ok, err = mandatoryFieldCheck(contractDetails)
+		if !ok {
+			return nil, err
+		}
 
-	if Days < Min_Days_DeliveryDuration {
-		return nil, errors.New("Delivery Duration must be greater than " + string(Min_Days_DeliveryDuration) + " days")
-	} else if Days > Max_Days_DeliveryDuration {
-		return nil, errors.New("Payment Duration must be less than " + string(Max_Days_DeliveryDuration) + " days")
-	}
-	/*duration := time.Since(deliveryDate)
-	if int(duration.Hours()) < (Min_Days_DeliveryDuration * 24) {
-		return nil, errors.New("Delivery Duration must be greater than " + string(Min_Days_DeliveryDuration) + " days")
-	} else if int(duration.Hours()) > (Max_Days_DeliveryDuration * 24) {
-		return nil, errors.New("Payment Duration must be less than " + string(Max_Days_DeliveryDuration) + " days")
-	}*/
+		//Delivary Date Duration checking
+		DeliveryDate, _ := time.Parse(time.RFC3339, contractDetails.DeliveryDetails.DeliveryDate)
+		CurrentDate := time.Now()
+		Days := DiffDays(int(DeliveryDate.Year()), int(DeliveryDate.Month()), int(DeliveryDate.Day()), int(CurrentDate.Year()), int(CurrentDate.Month()), int(CurrentDate.Day()))
 
-	// Payment duartion checking
-	PaymentDuration, _ := strconv.Atoi(contractDetails.TradeConditions.PaymentDuration)
-	if PaymentDuration < Min_Days_PaymentDuration {
-		return nil, errors.New("Payment Duration must be gereater than " + string(Min_Days_PaymentDuration) + " days")
-	} else if PaymentDuration > Max_Days_PaymentDuration {
-		return nil, errors.New("Payment Duration must be less than " + string(Max_Days_PaymentDuration) + " days")
-	}
+		if Days < Min_Days_DeliveryDuration {
+			return nil, errors.New("Delivery Duration must be greater than " + string(Min_Days_DeliveryDuration) + " days")
+		} else if Days > Max_Days_DeliveryDuration {
+			return nil, errors.New("Payment Duration must be less than " + string(Max_Days_DeliveryDuration) + " days")
+		}
+	  //duration := time.Since(deliveryDate)
+		//if int(duration.Hours()) < (Min_Days_DeliveryDuration * 24) {
+			//return nil, errors.New("Delivery Duration must be greater than " + string(Min_Days_DeliveryDuration) + " days")
+		//} else if int(duration.Hours()) > (Max_Days_DeliveryDuration * 24) {
+			//return nil, errors.New("Payment Duration must be less than " + string(Max_Days_DeliveryDuration) + " days")
+		//}
 
-	// Transport duartion checking
-	TransportDuration, _ := strconv.Atoi(contractDetails.TradeConditions.TransportDuration)
-	if TransportDuration < Min_Days_TransportDuration {
-		return nil, errors.New("Payment Duration must be gereater than " + string(Min_Days_TransportDuration) + " days")
-	} else if TransportDuration > Max_Days_TransportDuration {
-		return nil, errors.New("Payment Duration must be less than " + string(Max_Days_TransportDuration) + " days")
-	}
+		// Payment duartion checking
+		PaymentDuration, _ := strconv.Atoi(contractDetails.TradeConditions.PaymentDuration)
+		if PaymentDuration < Min_Days_PaymentDuration {
+			return nil, errors.New("Payment Duration must be gereater than " + string(Min_Days_PaymentDuration) + " days")
+		} else if PaymentDuration > Max_Days_PaymentDuration {
+			return nil, errors.New("Payment Duration must be less than " + string(Max_Days_PaymentDuration) + " days")
+		}
+
+		// Transport duartion checking
+		TransportDuration, _ := strconv.Atoi(contractDetails.TradeConditions.TransportDuration)
+		if TransportDuration < Min_Days_TransportDuration {
+			return nil, errors.New("Payment Duration must be gereater than " + string(Min_Days_TransportDuration) + " days")
+		} else if TransportDuration > Max_Days_TransportDuration {
+			return nil, errors.New("Payment Duration must be less than " + string(Max_Days_TransportDuration) + " days")
+		}
+	  comment ending */
 
 	contractDetails = addContractInformation(contractDetails)
 
@@ -1070,7 +1077,7 @@ func UpdateContractStatus(stub shim.ChaincodeStubInterface, args []string) ([]by
 				} else if (Days >= 6) && (Days <= 15) {
 					contractList.DiscountedAmout = contractList.TotalTradeAmout - (contractList.TotalTradeAmout * 0.15)
 					//return []byte("Disscount 10%"), nil //errors.New("Disscount 10%")
-				} else {
+				} else if Days >= 16 {
 					contractList.DiscountedAmout = contractList.TotalTradeAmout - (contractList.TotalTradeAmout * 0.20)
 					//return []byte("Disscount 20%"), nil //errors.New("Disscount 20%")
 				}
@@ -1087,6 +1094,7 @@ func UpdateContractStatus(stub shim.ChaincodeStubInterface, args []string) ([]by
 	return nil, err
 }
 
+/* Commented becouse v0.6 does not support it
 func mandatoryFieldCheck(contractDetails contract) (bool, error) {
 
 	if contractDetails.SellerDetails.Seller.UserId == "" {
@@ -1238,4 +1246,4 @@ func dataTypeCheck(contractDetails contract) (bool, error) {
 		}
 	}
 	return true, nil
-}
+}*/
