@@ -10,6 +10,7 @@ type contract struct {
 	TradeConditions                             tradeConditions `json:"tradeConditions"`
 	TotalTradeAmout                             float64         `json:"totalTradeAmount"`
 	DiscountedAmout                             float64         `json:"discountedAmount"`
+	DiscountPercentage                          float64         `json:"discountedAmount"`
 	DeliveryDetails                             deliveryDetails `json:"deliveryDetails"`
 	ContractCreateDate                          time.Time       `json:"createDate"`
 	IsLCAttached                                bool            `json:"isLCAttached"`
