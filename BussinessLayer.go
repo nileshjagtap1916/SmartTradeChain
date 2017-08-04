@@ -1070,7 +1070,7 @@ func UpdateContractStatus(stub shim.ChaincodeStubInterface, args []string) ([]by
 	if contractList.SellerDetails.Seller.UserId == userID {
 		if contractStatus == LC_Approved {
 			if CurrentDate.After(DeliveryDate) {
-				Days := DiffDays(int(DeliveryDate.Year()), int(DeliveryDate.Month()), int(DeliveryDate.Day()), int(CurrentDate.Year()), int(CurrentDate.Month()), int(CurrentDate.Day()))
+				Days := DiffDays(int(CurrentDate.Year()), int(CurrentDate.Month()), int(CurrentDate.Day()), int(DeliveryDate.Year()), int(DeliveryDate.Month()), int(DeliveryDate.Day()))
 				if (Days > 0) && (Days <= 5) {
 					contractList.DiscountedAmout = contractList.TotalTradeAmout - (contractList.TotalTradeAmout * 0.5)
 					//return []byte("Disscount 5%"), nil //errors.New("Disscount 5%")
