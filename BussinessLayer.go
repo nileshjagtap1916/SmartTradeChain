@@ -1073,7 +1073,7 @@ func UpdateContractStatus(stub shim.ChaincodeStubInterface, args []string) ([]by
 				Days := DiffDays(int(CurrentDate.Year()), int(CurrentDate.Month()), int(CurrentDate.Day()), int(DeliveryDate.Year()), int(DeliveryDate.Month()), int(DeliveryDate.Day()))
 				if (Days > 0) && (Days <= 5) {
 					contractList.DiscountPercentage = 5
-					contractList.DiscountedAmount = contractList.TotalTradeAmount - (contractList.TotalTradeAmount * 0.5)
+					contractList.DiscountedAmount = contractList.TotalTradeAmount - (contractList.TotalTradeAmount * 0.05)
 					//return []byte("Disscount 5%"), nil //errors.New("Disscount 5%")
 				} else if (Days >= 6) && (Days <= 15) {
 					contractList.DiscountPercentage = 10
